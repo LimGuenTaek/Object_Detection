@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model checkpoint
-checkpoint = '/content/drive/MyDrive/MyCode/checkpoint_ssd300.pth.tar'
+checkpoint = '/content/drive/MyDrive/MyCode/Code/checkpoint_ssd300.pth.tar'
 checkpoint = torch.load(checkpoint)
 start_epoch = checkpoint['epoch'] + 1
 print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
@@ -24,7 +24,6 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0
 
 def detect(prediction_json,index,original_image, min_score, max_overlap, top_k, suppress=None):
 
-    import pdb;pdb.set_trace()
     image = normalize(to_tensor(resize(original_image))) # Transform
   
     image = image.to(device)  # Move to default device
@@ -58,9 +57,6 @@ def detect(prediction_json,index,original_image, min_score, max_overlap, top_k, 
 
     
     print("index is {}".format(index))
-    
-  
-   
 
 if __name__ == '__main__':
 
@@ -77,7 +73,8 @@ if __name__ == '__main__':
         images.append("/content/drive/MyDrive/MyCode/KAIST_dataset/"+path[i][:11]+"lwir/"+path[i][11:17]+".jpg")
 
     for i in range(len(images)):
-      original_image = Image.open(images[15], mode='r')
+      print(i)
+      original_image = Image.open(images[i], mode='r')
       original_image = original_image.convert('RGB')
       detect(pd_json,i,original_image, min_score=0.2, max_overlap=0.5, top_k=200)
     
