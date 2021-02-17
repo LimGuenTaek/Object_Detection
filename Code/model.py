@@ -47,12 +47,6 @@ class VGGBase(nn.Module):
 
         self.conv7 = nn.Conv2d(1024, 1024, kernel_size=1)
 
-        # init에 layer를 추가하니 VGG16에서 pretrained 된 weight를 받아오려고 하길래 그 부분을 수정해야 했음
-        self.Deconv = nn.ConvTranspose2d(512,512,kernel_size=2,stride=2)
-        self.Conv_1=nn.Conv2d(1024,512,kernel_size=1)
-        self.Conv_3=nn.Conv2d(512,512,kernel_size=3,padding=1)
-        self.layer_norm=nn.LayerNorm(torch.Size([512, 38, 38]))
-        
         # Load pretrained layers
         self.load_pretrained_layers()
 
@@ -85,22 +79,9 @@ class VGGBase(nn.Module):
         out = F.relu(self.conv6(out))  # (N, 1024, 19, 19)
 
         conv7_feats = F.relu(self.conv7(out))  # (N, 1024, 19, 19)
-
-        # Feature fusion with Concatenate Module
-
-        conv5_3_feats=self.Deconv(conv5_3_feats)
-
-        conv4_3_feats=self.Conv_3(conv4_3_feats)
-        conv5_3_feats=self.Conv_3(conv5_3_feats)
-
-        conv4_3_feats=F.relu(self.layer_norm(conv4_3_feats)*20)
-        conv5_3_feats=F.relu(self.layer_norm(conv5_3_feats)*10)
-
-        fusion=torch.cat([conv4_3_feats,conv5_3_feats],dim=1)
-        fusion=F.relu(self.Conv_1(fusion))
         
         # Lower-level feature maps
-        return fusion, conv7_feats
+        return conv4_3_feats, conv7_feats
 
     def load_pretrained_layers(self):
         """
@@ -118,7 +99,7 @@ class VGGBase(nn.Module):
         pretrained_param_names = list(pretrained_state_dict.keys())
 
         # Transfer conv. parameters from pretrained model to current model
-        for i, param in enumerate(param_names[:-12]):  # excluding conv6 and conv7 parameters and fusion layer parameter
+        for i, param in enumerate(param_names[:-4]):  # excluding conv6 and conv7 parameters and fusion layer parameter
             state_dict[param] = pretrained_state_dict[pretrained_param_names[i]]
 
         # Convert fc6, fc7 to convolutional layers, and subsample (by decimation) to sizes of conv6 and conv7
@@ -229,6 +210,8 @@ class PredictionConvolutions(nn.Module):
                    'conv11_2': 4}
         # 4 prior-boxes implies we use 4 different aspect ratios, etc.
 
+        # 아마 256으로 모두 바꾸야 될 것
+        
         # Localization prediction convolutions (predict offsets w.r.t prior-boxes)
         self.loc_conv4_3 = nn.Conv2d(512, n_boxes['conv4_3'] * 4, kernel_size=3, padding=1)
         self.loc_conv7 = nn.Conv2d(1024, n_boxes['conv7'] * 4, kernel_size=3, padding=1)
@@ -336,9 +319,6 @@ class PredictionConvolutions(nn.Module):
 
 
 class SSD300(nn.Module):
-    """
-    The SSD300 network - encapsulates the base VGG network, auxiliary, and prediction convolutions.
-    """
 
     def __init__(self, n_classes):
         super(SSD300, self).__init__()
@@ -358,28 +338,23 @@ class SSD300(nn.Module):
         self.priors_cxcy = self.create_prior_boxes()
 
     def forward(self, image):
-        """
-        Forward propagation.
-
-        :param image: images, a tensor of dimensions (N, 3, 300, 300)
-        :return: 8732 locations and class scores (i.e. w.r.t each prior box) for each image
-        """
+        import pdb;pdb.set_trace()
+       
         # Run VGG base network convolutions (lower level feature map generators)
         conv4_3_feats, conv7_feats = self.base(image)  # (N, 512, 38, 38), (N, 1024, 19, 19)
 
-        # Rescale conv4_3 after L2 norm
+        # Rescale conv4_3 after L2 norm , 정규화를 해주는 이유는?
         norm = conv4_3_feats.pow(2).sum(dim=1, keepdim=True).sqrt()  # (N, 1, 38, 38)
         conv4_3_feats = conv4_3_feats / norm  # (N, 512, 38, 38)
         conv4_3_feats = conv4_3_feats * self.rescale_factors  # (N, 512, 38, 38)
         # (PyTorch autobroadcasts singleton dimensions during arithmetic)
 
         # Run auxiliary convolutions (higher level feature map generators)
-        conv8_2_feats, conv9_2_feats, conv10_2_feats, conv11_2_feats = \
-            self.aux_convs(conv7_feats)  # (N, 512, 10, 10),  (N, 256, 5, 5), (N, 256, 3, 3), (N, 256, 1, 1)
+        conv8_2_feats, conv9_2_feats, conv10_2_feats, conv11_2_feats = self.aux_convs(conv7_feats)
 
         # Run prediction convolutions (predict offsets w.r.t prior-boxes and classes in each resulting localization box)
-        locs, classes_scores = self.pred_convs(conv4_3_feats, conv7_feats, conv8_2_feats, conv9_2_feats, conv10_2_feats,
-                                               conv11_2_feats)  # (N, 8732, 4), (N, 8732, n_classes)
+        locs, classes_scores = self.pred_convs(conv4_3_feats, conv7_feats, conv8_2_feats, conv9_2_feats, conv10_2_feats,conv11_2_feats)  
+       
 
         return locs, classes_scores
 

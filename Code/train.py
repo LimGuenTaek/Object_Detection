@@ -20,7 +20,7 @@ n_classes = len(label_map)  # number of different types of objects
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning parameters
-checkpoint ='/content/drive/MyDrive/MyCode/Code/checkpoint_ssd300.pth.tar'  # path to model checkpoint, None if none
+checkpoint =None##'/content/drive/MyDrive/MyCode/Code/checkpoint_ssd300.pth.tar'  # path to model checkpoint, None if none
 batch_size = 8  # batch size
 iterations = 120000  # number of iterations to train
 workers = 4  # number of workers for loading data in the DataLoader
@@ -112,7 +112,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         boxes = [b.to(device) for b in boxes]
         labels = [l.to(device) for l in labels]
 
-        # Forward prop.
+        # Forward prop (bottom-up and Top-down)
         predicted_locs, predicted_scores = model(images)  # (N, 8732, 4), (N, 8732, n_classes)
         # Loss
         loss = criterion(predicted_locs, predicted_scores, boxes, labels,index)  # scalar
