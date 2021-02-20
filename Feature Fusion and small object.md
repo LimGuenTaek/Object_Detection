@@ -160,7 +160,13 @@ class Fusionlayer(nn.Module):
   
     def __init__(self):
         super(Fusionlayer,self).__init__()
-
+	
+	'''
+	convX_1 : for channel reduction to 256
+	convX_3 : for Concated features
+	UpX : for upsampling , using transposedConv2d
+	'''
+	
         self.conv4_3_1=nn.Conv2d(512,256,1,stride=1)
         self.conv4_3_3=nn.Conv2d(512,512,3,stride=1,padding=1)
 
@@ -176,11 +182,11 @@ class Fusionlayer(nn.Module):
         self.conv10_2_1=nn.Conv2d(256,256,1,stride=1)
         self.conv10_2_3=nn.Conv2d(512,256,3,stride=1,padding=1)
 
-        self.Up7=nn.Upsample(scale_factor=2,mode="nearest")
-        self.Up8_2=nn.Upsample(scale_factor=1.9,mode="nearest")
-        self.Up9_2=nn.Upsample(scale_factor=2,mode="nearest")
-        self.Up10_2=nn.Upsample(scale_factor=5/3,mode="nearest")
-        self.Up11_2=nn.Upsample(scale_factor=3,mode="nearest")
+	self.Up11=torch.nn.ConvTranspose2d(256,256,kernel_size=3)
+	self.Up10=torch.nn.ConvTranspose2d(256,256,kernel_size=3)
+	self.Up9=torch.nn.ConvTranspose2d(256,256,kernel_size=6)
+	self.Up8=torch.nn.ConvTranspose2d(256,256,kernel_size=10)
+	self.Up7=torch.nn.ConvTranspose2d(256,256,kernel_size=20)
 
         self.init_conv2d()
 
