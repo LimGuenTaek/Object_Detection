@@ -151,3 +151,84 @@ Reference : https://downloads.hindawi.com/journals/complexity/2019/7297960.pdf
 
 
 ---
+## Code
+---
+
+```python
+
+class Fusionlayer(nn.Module):
+  
+    def __init__(self):
+        super(Fusionlayer,self).__init__()
+
+        self.conv4_3_1=nn.Conv2d(512,256,1,stride=1)
+        self.conv4_3_3=nn.Conv2d(512,512,3,stride=1,padding=1)
+
+        self.conv7_1=nn.Conv2d(1024,256,1,stride=1)
+        self.conv7_3=nn.Conv2d(512,1024,3,stride=1,padding=1)
+
+        self.conv8_2_1=nn.Conv2d(512,256,1,stride=1)
+        self.conv8_2_3=nn.Conv2d(512,512,3,stride=1,padding=1)
+
+        self.conv9_2_1=nn.Conv2d(256,256,1,stride=1)
+        self.conv9_2_3=nn.Conv2d(512,256,3,stride=1,padding=1)
+
+        self.conv10_2_1=nn.Conv2d(256,256,1,stride=1)
+        self.conv10_2_3=nn.Conv2d(512,256,3,stride=1,padding=1)
+
+        self.Up7=nn.Upsample(scale_factor=2,mode="nearest")
+        self.Up8_2=nn.Upsample(scale_factor=1.9,mode="nearest")
+        self.Up9_2=nn.Upsample(scale_factor=2,mode="nearest")
+        self.Up10_2=nn.Upsample(scale_factor=5/3,mode="nearest")
+        self.Up11_2=nn.Upsample(scale_factor=3,mode="nearest")
+
+        self.init_conv2d()
+
+
+
+    def init_conv2d(self): # Init the convolution parameter 
+    
+        for c in self.children():
+          if isinstance(c, nn.Conv2d):
+            nn.init.xavier_uniform_(c.weight)
+            nn.init.constant_(c.bias, 0.)
+
+    def forward(self,feat4_3,feat7,feat8_2,feat9_2,feat10_2,feat11_2):
+
+        # First step : applying 1 by 1 Conv for setting same channel 256 , scale-invariant
+
+        feat4_3_1=self.conv4_3_1(feat4_3)
+        feat7_1=self.conv7_1(feat7)
+        feat8_2_1=self.conv8_2_1(feat8_2)
+        feat9_2_1=self.conv9_2_1(feat9_2)
+        feat10_2_1=self.conv10_2_1(feat10_2)
+        feat11_2_1=feat11_2
+
+        # Second step : Upsampling before first fusion Not using nearest interpolation 
+	# applying Transepose convolution for upsampling
+
+        Up_feat7=self.Up7(feat7_1)
+        Up_feat8_2=self.Up8_2(feat8_2_1)
+        Up_feat9_2=self.Up9_2(feat9_2_1)
+        Up_feat10_2=self.Up10_2(feat10_2_1)
+        Up_feat11_2=self.Up11_2(feat11_2_1)
+
+        # Third step : first fusion , element wise addition or element wise product 
+	# In this Code , I use the element-wise product method for small object detection
+
+        fused_feat4_3=feat4_3_1*Up_feat7
+        fused_feat7=feat7_1*Up_feat8_2
+        fused_feat8_2=feat8_2_1*Up_feat9_2
+        fused_feat9_2=feat9_2_1*Up_feat10_2
+        fused_feat10_2=feat10_2_1*Up_feat11_2
+
+        # Forth step : second fusion , torch.cat(,dim=1) + conv2d(512,N,kernel_size=3,stride=1,padding=1)
+
+        feat4_3=self.conv4_3_3(torch.cat([feat4_3_1,fused_feat4_3],dim=1))
+        feat7=self.conv7_3(torch.cat([feat7_1,fused_feat7],dim=1))
+        feat8_2=self.conv8_2_3(torch.cat([feat8_2_1,fused_feat8_2],dim=1))
+        feat9_2=self.conv9_2_3(torch.cat([feat9_2_1,fused_feat9_2],dim=1))
+        feat10_2=self.conv10_2_3(torch.cat([feat10_2_1,fused_feat10_2],dim=1))
+        
+        return feat4_3,feat7,feat8_2,feat9_2,feat10_2,feat11_2
+```
