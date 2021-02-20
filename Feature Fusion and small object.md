@@ -92,7 +92,7 @@ Reference : https://downloads.hindawi.com/journals/complexity/2019/7297960.pdf
 
   - Based on the VGG 16 network structure the SSD algorithm extracts multiple sets of feature layers in a shape of pyramid for object class prediction and object frame labeling
 	
-  - Copaerd with the regional proposal-based convolutional neural network , the SSD algorithm caccles a large numbers of regions
+  - Copaerd with the regional proposal-based convolutional neural network , the SSD algorithm cancels a large numbers of regions
 	
   - Feature 4_3 need to be L2-regularized because it has a significant fluctuation ratio compared to that of other feature extraction layers
 	
@@ -121,34 +121,33 @@ Reference : https://downloads.hindawi.com/journals/complexity/2019/7297960.pdf
 
 * **How to Fuse the multi-scale feature map on SSD model**
 
-  - Input the image from left to right , and the size of the input image is cropped to 300
-  
-  - Obtain the feature maps from original SSD model (4_3 , 7 , 8 , 9 , 10 ,11)
-  
-  - The first five(4_3 , 7 , 8_2 , 9_2 , 10_2) feature maps are subjected to a scale-invariant convolution operation by using a convolution kernel of size 1 , step size 1 , and channel number 256 , whose aim is to unify the number of channels of all feature maps with the channel of the highest layer
-  
-  - And then the upper sampling operation is carried out for these five layers(7_1 , 8_2_1 , 9_2_1 , 10_2_1 , 11_2)
-  
-  - And these layers are enlarged two times to the original one by using nearest neighbor interpolation
-  
-  - Next starting from the bottom layer , feature fusion is carried out successively with the upper sampling layer of the previous layer 
-  
-  - Here , feature fusion is element-wise addition 
+    * Based on the SSD algorithm and pyramid network structure , an SSD object detection algorithm combined with the improved feature pyramid network fusion method is proposed , called FPEF-SSD
 
+    * The network first inputs the image from left to right and the size of the input image is cropped to 300.
 
-* **After first fusion**
+    * The first part is the original SSD model feature selection layer and then the six pyramid feature maps are obtained
 
-    *  After the first fusion operation , because of the combination of deep and shallow features , the interpolation operation of upper sampling in the shallow layer will bring errors , so the convolution operation is generally required to complete the fuzzy removal
+    * The first five feature maps are subjected to a scale-invariant convolution operation by using a convolution kernel of size 1 , step size 1 , and channel number 256 , whose aim is to unify the number of channels of all feature maps with the channel of the highest layer
 
-    * The alogorithm in this paper enhances the feature of this layer before the convolution operation.
+    * The feature of edge information is preserved to the greatest extent because of the complementary operation 
 
-    * Specifically , the first five layers of features after the first fusion are fused with the features before the upsampling again by using the fusion feature cascade(Concat)
+    * And this convolved layer is named X-1 , where X represents the original feature layer name ; then , the upper sampling operation is carried out for these five layers except the first layer and these layers are enlarged two times to the original one by using the nearest neighbot interpolation  
 
-    * This time , the number of channels in both sets of features is 256 , so there is no need for additional batch normalization processing 
+    * Next starting from the bottom layer , feature fusion is carried out successively with the upper sampling layer of the previous layer (black solid circles in Figure)
 
-    * Finally , these enhanced features are convolved again , the convolution kernel of size 3 is used form high to the low feature but the number of channels is 512 , 1024 , 512 , 256 , and 256 successively
+    * Here the feature fusion is element-wise addition , which means the values at the corresponding positions of the two sets of features are added , so the condition is that the size of layers and the number of channels are exactly the same size
 
-    * And then Taking a NMS for reducing boxes
+    * After the first fusion operation , because of the combination of deep and shallow features , the interpolation operation of upper sampling in the shallow layer will bring errors , so the convolution operation is generally required to complete the fuzzy removal
+
+    * The algorithm in this paper enhances the feature of this layer before the convolution operation
+
+    * Specifically , the first five layers of features after the first fusion are fused with the features before the upsampling again (black solid squares in Figure) by using the fusion feature cascade (Concat)
+
+    * This time , the number of channels in both sets of features 256 , so there is no need for additional batch normalization processing which can as far as possible ensure the detection speed 
+
+    * Finally , these enhanced features are convolved again , the convolution kernel of size 3 is used from the high to the low feature layer , but the number of channel is 512 , 1024 , 512 , 256 ,256 successively
+
+    * Then , taking NMS and prediction
 
 
 ---
