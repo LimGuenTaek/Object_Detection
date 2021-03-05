@@ -1,38 +1,38 @@
 import torch
 from torch.utils.data import Dataset
 import json
-import os
 from PIL import Image
 from utils import transform
 
 
 class KAISTDataset(Dataset):
 
-    def __init__(self,path_images,path_objects,split):
+    def __init__(self,split):
     
       self.split=split
-      self.images=[]
+      self.thermal=[]
+      self.rgb=[]
       self.objects=[]
+
+      with open('/content/drive/MyDrive/KAIST_Double/Json/TRAIN_RGB.json', 'r') as r:
+        self.rgb = json.load(r)
+
+      with open('/content/drive/MyDrive/KAIST_Double/Json/TRAIN_THERMAL.json', 'r') as t:
+        self.thermal = json.load(t)
+
+      with open('/content/drive/MyDrive/KAIST_Double/Json/TRAIN_objects.json', 'r') as o:
+        self.objects = json.load(o)
       
-      f=open("/content/drive/MyDrive/MyCode/train-all-20.txt",'r')
-      path=f.readlines()
-
-      # Load images files
-      for i in range(len(path)):
-        self.images.append(path_images+path[i][:6]+path[i][:11]+"/lwir/"+path[i][11:17]+".jpg")
-
-      # Load annotation files
-      with open(path_objects+'TRAIN_objects.json', 'r') as j:
-        self.objects = json.load(j)
-
-      assert len(self.images) == len(self.objects)
+      assert len(self.rgb) == len(self.objects) == len(self.thermal)
 
     def __getitem__(self, i):
         
-        image = Image.open(self.images[i], mode='r')
-        image = image.convert('RGB') 
+        rgb_image = Image.open(self.rgb[i], mode='r')
+        rgb_image = rgb_image.convert('RGB') 
 
-        # Read objects in this image (bounding boxes, labels, difficulties)
+        thermal_image = Image.open(self.thermal[i], mode='r')
+        thermal_image = thermal_image.convert('L') 
+
         objects = self.objects[i]
 
         boxes = torch.FloatTensor(objects['boxes'])  # (n_objects, 4)
@@ -40,28 +40,29 @@ class KAISTDataset(Dataset):
         difficulties = torch.ByteTensor(objects['is_crowd'])  # (n_objects)
     
         # Apply transformations
-        image, boxes, labels, difficulties = transform(image, boxes, labels, difficulties, split=self.split)
+        rgb_image, thermal_image, boxes, labels, difficulties = transform(rgb_image, thermal_image, boxes, labels, difficulties, split=self.split)
 
-        return image, boxes, labels, difficulties,i
+        return rgb_image, thermal_image, boxes, labels, difficulties
 
     def __len__(self):
-        return len(self.images)
+        return len(self.rgb)
 
     def collate_fn(self, batch):
         
-        images = list()
+        rgb = list()
+        thermal=list()
         boxes = list()
         labels = list()
         difficulties = list()
-        index=list()
 
         for b in batch:
-            images.append(b[0])
-            boxes.append(b[1])
-            labels.append(b[2])
-            difficulties.append(b[3])
-            index.append(b[4])
+            rgb.append(b[0])
+            thermal.append(b[1])
+            boxes.append(b[2])
+            labels.append(b[3])
+            difficulties.append(b[4])
             
-        images = torch.stack(images, dim=0)
+        rgb = torch.stack(rgb, dim=0)
+        thermal = torch.stack(thermal, dim=0)
 
-        return images, boxes, labels, difficulties,index
+        return rgb, thermal, boxes, labels, difficulties

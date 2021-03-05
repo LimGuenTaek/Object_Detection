@@ -9,9 +9,6 @@ from datasets import KAISTDataset
 from utils import *
 
 # Data parameters
-
-images_front="/content/drive/MyDrive/MyCode/KAIST_dataset/"
-object_front="/content/drive/MyDrive/MyCode/Json/"
 keep_difficult = True  # use objects considered difficult to detect?
 
 # Model parameters
@@ -20,12 +17,12 @@ n_classes = len(label_map)  # number of different types of objects
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning parameters
-checkpoint =None##'/content/drive/MyDrive/MyCode/Code/checkpoint_ssd300.pth.tar'  # path to model checkpoint, None if none
+checkpoint =None  # path to model checkpoint, None if none
 batch_size = 8  # batch size
 iterations = 120000  # number of iterations to train
 workers = 4  # number of workers for loading data in the DataLoader
-print_freq = 20  # print training status every __ batches
-lr = 1e-4  # learning rate
+print_freq = 50  # print training status every __ batches
+lr = 1e-3  # learning rate
 decay_lr_at = [80000, 100000]  # decay learning rate after these many iterations
 decay_lr_to = 0.1  # decay learning rate to this fraction of the existing learning rate
 momentum = 0.9  # momentum
@@ -64,8 +61,7 @@ def main():
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
     
-
-    train_dataset = KAISTDataset(images_front,object_front,'TRAIN')
+    train_dataset = KAISTDataset('TRAIN')
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                                                collate_fn=train_dataset.collate_fn, num_workers=workers,
                                                pin_memory=True)    
@@ -79,18 +75,20 @@ def main():
     # The paper trains for 120,000 iterations with a batch size of 32, decays after 80,000 and 100,000 iterations
     epochs = iterations // (len(train_dataset) // 32)
     decay_lr_at = [it // (len(train_dataset) // 32) for it in decay_lr_at]
-    print("epochs : {}".format(epochs))
-    # Epochs
+   
+    print("Toatel epochs : {}".format(epochs))
+    for epoch in range(start_epoch,101):
 
-    for epoch in range(start_epoch, epochs):
-
+        print("epochs : {}".format(epoch))
         # Decay learning rate at particular epochs
         if epoch in decay_lr_at:
             adjust_learning_rate(optimizer, decay_lr_to)
         # One epoch's training
         train(train_loader=train_loader,model=model,criterion=criterion,optimizer=optimizer,epoch=epoch)
+
         # Save checkpoint
-        save_checkpoint(epoch, model, optimizer)
+        if epoch % 5 ==0:
+          save_checkpoint(epoch, model, optimizer)
 
 
 def train(train_loader, model, criterion, optimizer, epoch):
@@ -102,20 +100,20 @@ def train(train_loader, model, criterion, optimizer, epoch):
     losses = AverageMeter()  # loss
 
     start = time.time()
-    inf_idx=[]
+
     # Batches
-    for i, (images, boxes, labels, _,index) in enumerate(train_loader):
+    for i, (rgb, thermal, boxes, labels, _ ) in enumerate(train_loader):
 
         data_time.update(time.time() - start)
 
-        images = images.to(device)  # (batch_size (N), 3, 300, 300)
+        rgb = rgb.to(device)
+        thermal = thermal.to(device)  
         boxes = [b.to(device) for b in boxes]
         labels = [l.to(device) for l in labels]
 
-        # Forward prop (bottom-up and Top-down)
-        predicted_locs, predicted_scores = model(images)  # (N, 8732, 4), (N, 8732, n_classes)
+        predicted_locs, predicted_scores = model(rgb,thermal)  # (N, 8732, 4), (N, 8732, n_classes)
         # Loss
-        loss = criterion(predicted_locs, predicted_scores, boxes, labels,index)  # scalar
+        loss = criterion(predicted_locs, predicted_scores, boxes, labels)  # scalar
 
         # Backward prop.
         optimizer.zero_grad()
@@ -128,7 +126,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # Update model
         optimizer.step()
 
-        losses.update(loss.item(), images.size(0))
+        losses.update(loss.item(), rgb.size(0))
         batch_time.update(time.time() - start)
 
         start = time.time()
@@ -142,7 +140,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(epoch, i, len(train_loader),
                                                                   batch_time=batch_time,
                                                                   data_time=data_time, loss=losses))
-    del predicted_locs, predicted_scores, images, boxes, labels  # free some memory since their histories may be stored
+    del predicted_locs, predicted_scores, rgb, thermal, boxes, labels  # free some memory since their histories may be stored
 
 
 if __name__ == '__main__':

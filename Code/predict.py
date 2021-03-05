@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model checkpoint
-checkpoint = '/content/drive/MyDrive/MyCode/Code/checkpoint_ssd300.pth.tar'
+checkpoint = '/content/drive/MyDrive/KAIST_Original/tar/75_checkpoint_ssd300.pth.tar'
 checkpoint = torch.load(checkpoint)
 start_epoch = checkpoint['epoch'] + 1
 print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
@@ -55,22 +55,19 @@ def detect(prediction_json,index,original_image, min_score, max_overlap, top_k, 
 
       prediction_json.append(prediction)
 
-    
-    print("index is {}".format(index))
-
 if __name__ == '__main__':
 
     images=[]
     pd_json=[]
 
-    f=open("/content/drive/MyDrive/MyCode/test-all-20.txt",'r')
+    f=open("/content/drive/MyDrive/KAIST_Original/test-all-20.txt",'r')
     path=f.readlines()
 
     for i in range(len(path)):
       if i < 1455:
-        images.append("/content/drive/MyDrive/MyCode/KAIST_dataset/"+path[i][:6]+path[i][:11]+"lwir/"+path[i][11:17]+".jpg")
+        images.append("/content/drive/MyDrive/KAIST_Original/KAIST_dataset/"+path[i][:6]+path[i][:11]+"lwir/"+path[i][11:17]+".jpg")
       else :
-        images.append("/content/drive/MyDrive/MyCode/KAIST_dataset/"+path[i][:11]+"lwir/"+path[i][11:17]+".jpg")
+        images.append("/content/drive/MyDrive/KAIST_Original/KAIST_dataset/"+path[i][:11]+"lwir/"+path[i][11:17]+".jpg")
 
     for i in range(len(images)):
       print(i)
@@ -78,6 +75,6 @@ if __name__ == '__main__':
       original_image = original_image.convert('RGB')
       detect(pd_json,i,original_image, min_score=0.2, max_overlap=0.5, top_k=200)
     
-    with open('/content/drive/MyDrive/MyCode/Json/prediction_example.json','w',encoding="utf-8") as n:
+    with open('/content/drive/MyDrive/KAIST_Original/Json/prediction_example.json','w',encoding="utf-8") as n:
       json.dump(pd_json,n,ensure_ascii=False,indent="\t")
     

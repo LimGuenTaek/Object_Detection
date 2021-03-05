@@ -412,8 +412,7 @@ def expand(image, boxes, filler):
     new_image[:, top:bottom, left:right] = image
 
     # Adjust bounding boxes' coordinates accordingly
-    new_boxes = boxes + torch.FloatTensor([left, top, left, top]).unsqueeze(
-        0)  # (n_objects, 4), n_objects is the no. of objects in this image
+    new_boxes = boxes + torch.FloatTensor([left, top, left, top]).unsqueeze(0)  # (n_objects, 4), n_objects is the no. of objects in this image
 
     return new_image, new_boxes
 
@@ -524,29 +523,21 @@ def flip(image, boxes):
     return new_image, new_boxes
 
 
-def resize(image, boxes, dims=(300, 300), return_percent_coords=True):
-    """
-    Resize image. For the SSD300, resize to (300, 300).
-
-    Since percent/fractional coordinates are calculated for the bounding boxes (w.r.t image dimensions) in this process,
-    you may choose to retain them.
-
-    :param image: image, a PIL Image
-    :param boxes: bounding boxes in boundary coordinates, a tensor of dimensions (n_objects, 4)
-    :return: resized image, updated bounding box coordinates (or fractional coordinates, in which case they remain the same)
-    """
+def resize(rgb, thermal, boxes, dims=(300, 300), return_percent_coords=True):
+ 
     # Resize image
-    new_image = FT.resize(image, dims)
+    new_rgb = FT.resize(rgb, dims)
+    new_thermal=FT.resize(thermal,dims)
 
     # Resize bounding boxes
-    old_dims = torch.FloatTensor([image.width, image.height, image.width, image.height]).unsqueeze(0)
+    old_dims = torch.FloatTensor([rgb.width, rgb.height, rgb.width, rgb.height]).unsqueeze(0)
     new_boxes = boxes / old_dims  # percent coordinates
 
     if not return_percent_coords:
         new_dims = torch.FloatTensor([dims[1], dims[0], dims[1], dims[0]]).unsqueeze(0)
         new_boxes = new_boxes * new_dims
 
-    return new_image, new_boxes
+    return new_rgb, new_thermal, new_boxes
 
 
 def photometric_distort(image):
@@ -580,27 +571,29 @@ def photometric_distort(image):
     return new_image
 
 
-def transform(image, boxes, labels, difficulties, split):
+def transform(rgb, thermal, boxes, labels, difficulties, split):
   
     assert split in {'TRAIN', 'TEST'}
 
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
 
-    new_image = image
+    new_rgb = rgb
+    new_thermal = thermal
     new_boxes = boxes
     new_labels = labels
     new_difficulties = difficulties
+    
+    if split == 'TRAIN': 
 
-    if split == 'TRAIN': # Skip the following operations for evaluation/testing
-        # A series of photometric distortions in random order, each with 50% chance of occurrence, as in Caffe repo
-        new_image = photometric_distort(new_image) 
-        # Convert PIL image to Torch tensor
-        new_image = FT.to_tensor(new_image) 
-        # Expand image (zoom out) with a 50% chance - helpful for training detection of small objects
-        # Fill surrounding space with the mean of ImageNet data that our base VGG was trained on
-        if random.random() < 0.5:
-            new_image, new_boxes = expand(new_image, boxes, filler=mean)
+        new_rgb = photometric_distort(new_rgb)
+        new_thermal = photometric_distort(new_thermal)
+         
+        new_rgb = FT.to_tensor(new_rgb) 
+        new_thermal = FT.to_tensor(new_thermal) 
+ 
+        if random.random() < 0.5: # for small object detection
+            new_rgb, new_thermal, new_boxes = expand(new_rgb, new_thermal, boxes, filler=mean)
 
         # Randomly crop image (zoom in)
         new_image, new_boxes, new_labels, new_difficulties = random_crop(new_image, new_boxes, new_labels,
@@ -611,16 +604,18 @@ def transform(image, boxes, labels, difficulties, split):
         # Flip image with a 50% chance
         if random.random() < 0.5:
             new_image, new_boxes = flip(new_image, new_boxes)
-
+    
     # Resize image to (300, 300) - this also converts absolute boundary coordinates to their fractional form
-    new_image, new_boxes = resize(new_image, new_boxes, dims=(300, 300))
-
+    new_rgb, new_thermal, new_boxes = resize(new_rgb, new_thermal , new_boxes, dims=(300, 300))
     # Convert PIL image to Torch tensor
-    new_image = FT.to_tensor(new_image)
-
+    new_rgb = FT.to_tensor(new_rgb) 
+    new_thermal = FT.to_tensor(new_thermal) 
     # Normalize by mean and standard deviation of ImageNet data that our base VGG was trained on
-    new_image = FT.normalize(new_image, mean=mean, std=std)
-    return new_image, new_boxes, new_labels, new_difficulties
+
+    new_rgb = FT.normalize(new_rgb, mean=mean, std=std)
+    new_thermal = FT.normalize(new_thermal, mean=[0.486], std=[0.229])
+
+    return new_rgb, new_thermal, new_boxes, new_labels, new_difficulties
 
 
 def adjust_learning_rate(optimizer, scale):
@@ -662,15 +657,14 @@ def save_checkpoint(epoch, model, optimizer):
     state = {'epoch': epoch,
              'model': model,
              'optimizer': optimizer}
-    filename = 'checkpoint_ssd300.pth.tar'
-    torch.save(state, filename)
+    filename = str(epoch)+'_checkpoint_ssd300.pth.tar'
+    torch.save(state,'/content/drive/MyDrive/KAIST_Double/tar/'+filename)
 
 
 class AverageMeter(object):
     """
     Keeps track of most recent, average, sum, and count of a metric.
     """
-
     def __init__(self):
         self.reset()
 
