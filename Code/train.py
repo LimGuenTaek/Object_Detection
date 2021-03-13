@@ -17,12 +17,12 @@ n_classes = len(label_map)  # number of different types of objects
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Learning parameters
-checkpoint =None  # path to model checkpoint, None if none
-batch_size = 8  # batch size
+checkpoint = None # path to model checkpoint, None if none
+batch_size = 16  # batch size
 iterations = 120000  # number of iterations to train
 workers = 4  # number of workers for loading data in the DataLoader
 print_freq = 50  # print training status every __ batches
-lr = 1e-3  # learning rate
+lr = 1e-4  # learning rate
 decay_lr_at = [80000, 100000]  # decay learning rate after these many iterations
 decay_lr_to = 0.1  # decay learning rate to this fraction of the existing learning rate
 momentum = 0.9  # momentum
@@ -83,12 +83,12 @@ def main():
         # Decay learning rate at particular epochs
         if epoch in decay_lr_at:
             adjust_learning_rate(optimizer, decay_lr_to)
+        ##import pdb;pdb.set_trace()
         # One epoch's training
         train(train_loader=train_loader,model=model,criterion=criterion,optimizer=optimizer,epoch=epoch)
 
         # Save checkpoint
-        if epoch % 5 ==0:
-          save_checkpoint(epoch, model, optimizer)
+        save_checkpoint(epoch, model, optimizer)
 
 
 def train(train_loader, model, criterion, optimizer, epoch):

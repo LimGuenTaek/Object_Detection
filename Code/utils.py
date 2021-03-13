@@ -379,20 +379,16 @@ def find_jaccard_overlap(set_1, set_2):
 # Some augmentation functions below have been adapted from
 # From https://github.com/amdegroot/ssd.pytorch/blob/master/utils/augmentations.py
 
-def expand(image, boxes, filler):
+def expand(rgb, thermal, boxes, filler,filler_thermal):
     """
-    Perform a zooming out operation by placing the image in a larger canvas of filler material.
-
-    Helps to learn to detect smaller objects.
-
     :param image: image, a tensor of dimensions (3, original_h, original_w)
     :param boxes: bounding boxes in boundary coordinates, a tensor of dimensions (n_objects, 4)
     :param filler: RBG values of the filler material, a list like [R, G, B]
     :return: expanded image, updated bounding box coordinates
     """
     # Calculate dimensions of proposed expanded (zoomed-out) image
-    original_h = image.size(1)
-    original_w = image.size(2)
+    original_h = rgb.size(1)
+    original_w = rgb.size(2)
     max_scale = 4
     scale = random.uniform(1, max_scale)
     new_h = int(scale * original_h)
@@ -400,7 +396,10 @@ def expand(image, boxes, filler):
 
     # Create such an image with the filler
     filler = torch.FloatTensor(filler)  # (3)
-    new_image = torch.ones((3, new_h, new_w), dtype=torch.float) * filler.unsqueeze(1).unsqueeze(1)  # (3, new_h, new_w)
+    filler_thermal = torch.FloatTensor(filler_thermal)
+    new_rgb = torch.ones((3, new_h, new_w), dtype=torch.float) * filler.unsqueeze(1).unsqueeze(1)
+    new_thermal = torch.ones((1, new_h, new_w), dtype=torch.float) * filler_thermal.unsqueeze(1).unsqueeze(1)
+  
     # Note - do not use expand() like new_image = filler.unsqueeze(1).unsqueeze(1).expand(3, new_h, new_w)
     # because all expanded values will share the same memory, so changing one pixel will change all
 
@@ -409,30 +408,24 @@ def expand(image, boxes, filler):
     right = left + original_w
     top = random.randint(0, new_h - original_h)
     bottom = top + original_h
-    new_image[:, top:bottom, left:right] = image
-
+    new_rgb[:, top:bottom, left:right] = rgb
+    new_thermal[:, top:bottom, left:right] = thermal
     # Adjust bounding boxes' coordinates accordingly
     new_boxes = boxes + torch.FloatTensor([left, top, left, top]).unsqueeze(0)  # (n_objects, 4), n_objects is the no. of objects in this image
 
-    return new_image, new_boxes
+    return new_rgb, new_thermal, new_boxes
 
 
-def random_crop(image, boxes, labels, difficulties):
+def random_crop(rgb, thermal, boxes, labels, difficulties):
     """
-    Performs a random crop in the manner stated in the paper. Helps to learn to detect larger and partial objects.
-
-    Note that some objects may be cut out entirely.
-
-    Adapted from https://github.com/amdegroot/ssd.pytorch/blob/master/utils/augmentations.py
-
     :param image: image, a tensor of dimensions (3, original_h, original_w)
     :param boxes: bounding boxes in boundary coordinates, a tensor of dimensions (n_objects, 4)
     :param labels: labels of objects, a tensor of dimensions (n_objects)
     :param difficulties: difficulties of detection of these objects, a tensor of dimensions (n_objects)
     :return: cropped image, updated bounding box coordinates, updated labels, updated difficulties
     """
-    original_h = image.size(1)
-    original_w = image.size(2)
+    original_h = rgb.size(1)
+    original_w = rgb.size(2)
     # Keep choosing a minimum overlap until a successful crop is made
     while True:
         # Randomly draw the value for minimum overlap
@@ -440,7 +433,7 @@ def random_crop(image, boxes, labels, difficulties):
 
         # If not cropping
         if min_overlap is None:
-            return image, boxes, labels, difficulties
+            return rgb, thermal, boxes, labels, difficulties
 
         # Try up to 50 times for this choice of minimum overlap
         # This isn't mentioned in the paper, of course, but 50 is chosen in paper authors' original Caffe repo
@@ -476,8 +469,8 @@ def random_crop(image, boxes, labels, difficulties):
                 continue
 
             # Crop image
-            new_image = image[:, top:bottom, left:right]  # (3, new_h, new_w)
-
+            new_rgb = rgb[:, top:bottom, left:right]  # (3, new_h, new_w)
+            new_thermal=thermal[:, top:bottom, left:right]
             # Find centers of original bounding boxes
             bb_centers = (boxes[:, :2] + boxes[:, 2:]) / 2.  # (n_objects, 2)
 
@@ -499,11 +492,10 @@ def random_crop(image, boxes, labels, difficulties):
             new_boxes[:, :2] -= crop[:2]
             new_boxes[:, 2:] = torch.min(new_boxes[:, 2:], crop[2:])  # crop[2:] is [right, bottom]
             new_boxes[:, 2:] -= crop[:2]
+            return new_rgb, new_thermal, new_boxes, new_labels, new_difficulties
 
-            return new_image, new_boxes, new_labels, new_difficulties
 
-
-def flip(image, boxes):
+def flip(rgb, thermal, boxes):
     """
     Flip image horizontally.
 
@@ -512,15 +504,15 @@ def flip(image, boxes):
     :return: flipped image, updated bounding box coordinates
     """
     # Flip image
-    new_image = FT.hflip(image)
-
+    new_rgb = FT.hflip(rgb)
+    new_thermal = FT.hflip(thermal)
     # Flip boxes
     new_boxes = boxes
-    new_boxes[:, 0] = image.width - boxes[:, 0] - 1
-    new_boxes[:, 2] = image.width - boxes[:, 2] - 1
+    new_boxes[:, 0] = rgb.width - boxes[:, 0] - 1
+    new_boxes[:, 2] = rgb.width - boxes[:, 2] - 1
     new_boxes = new_boxes[:, [2, 1, 0, 3]]
 
-    return new_image, new_boxes
+    return new_rgb, new_thermal, new_boxes
 
 
 def resize(rgb, thermal, boxes, dims=(300, 300), return_percent_coords=True):
@@ -572,7 +564,7 @@ def photometric_distort(image):
 
 
 def transform(rgb, thermal, boxes, labels, difficulties, split):
-  
+
     assert split in {'TRAIN', 'TEST'}
 
     mean = [0.485, 0.456, 0.406]
@@ -591,19 +583,19 @@ def transform(rgb, thermal, boxes, labels, difficulties, split):
          
         new_rgb = FT.to_tensor(new_rgb) 
         new_thermal = FT.to_tensor(new_thermal) 
- 
         if random.random() < 0.5: # for small object detection
-            new_rgb, new_thermal, new_boxes = expand(new_rgb, new_thermal, boxes, filler=mean)
+            new_rgb, new_thermal, new_boxes = expand(new_rgb, new_thermal, boxes, filler=mean,filler_thermal=[0.485])
 
         # Randomly crop image (zoom in)
-        new_image, new_boxes, new_labels, new_difficulties = random_crop(new_image, new_boxes, new_labels,
+        new_rgb, new_thermal, new_boxes, new_labels, new_difficulties = random_crop(new_rgb, new_thermal, new_boxes, new_labels,
                                                                          new_difficulties)
         # Convert Torch tensor to PIL image
-        new_image = FT.to_pil_image(new_image)
+        new_rgb = FT.to_pil_image(new_rgb)
+        new_thermal= FT.to_pil_image(new_thermal)
 
         # Flip image with a 50% chance
         if random.random() < 0.5:
-            new_image, new_boxes = flip(new_image, new_boxes)
+            new_rgb, new_thermal, new_boxes = flip(new_rgb, new_thermal, new_boxes)
     
     # Resize image to (300, 300) - this also converts absolute boundary coordinates to their fractional form
     new_rgb, new_thermal, new_boxes = resize(new_rgb, new_thermal , new_boxes, dims=(300, 300))
@@ -658,7 +650,7 @@ def save_checkpoint(epoch, model, optimizer):
              'model': model,
              'optimizer': optimizer}
     filename = str(epoch)+'_checkpoint_ssd300.pth.tar'
-    torch.save(state,'/content/drive/MyDrive/KAIST_Double/tar/'+filename)
+    torch.save(state,'/content/drive/MyDrive/KAIST_Double/tar_bn/'+filename)
 
 
 class AverageMeter(object):

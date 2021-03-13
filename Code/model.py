@@ -18,26 +18,39 @@ class VGGBase(nn.Module):
 
         # RGB convolutional layers in VGG16
         self.rgb_conv1_1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)  # stride = 1, by default
+        self.conv1_1_bn_vis = nn.BatchNorm2d(64, affine=True)
         self.rgb_conv1_2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.conv1_2_bn_vis = nn.BatchNorm2d(64, affine=True)
         self.rgb_pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.rgb_conv2_1 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv2_1_bn_vis = nn.BatchNorm2d(128, affine=True)
         self.rgb_conv2_2 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.conv2_2_bn_vis = nn.BatchNorm2d(128, affine=True)
         self.rgb_pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.rgb_conv3_1 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.conv3_1_bn_vis = nn.BatchNorm2d(256, affine=True)
         self.rgb_conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv3_2_bn_vis = nn.BatchNorm2d(256, affine=True)
         self.rgb_conv3_3 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv3_3_bn_vis = nn.BatchNorm2d(256, affine=True)
         self.rgb_pool3 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)  # ceiling (not floor) here for even dims
 
         self.rgb_conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.conv4_1_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv4_2_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_conv4_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv4_3_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.rgb_conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_1_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_2_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_3_bn_vis = nn.BatchNorm2d(512, affine=True)
         self.rgb_pool5 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)  # retains size because stride is 1 (and padding)
 
         # Replacements for FC6 and FC7 in VGG16
@@ -46,26 +59,39 @@ class VGGBase(nn.Module):
 
         # THERMAL convolutional layers in VGG16
         self.thermal_conv1_1 = nn.Conv2d(1, 64, kernel_size=3, padding=1)  # stride = 1, by default
+        self.conv1_1_bn_lwir = nn.BatchNorm2d(64, affine=True)
         self.thermal_conv1_2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.conv1_2_bn_lwir = nn.BatchNorm2d(64, affine=True)
         self.thermal_pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.thermal_conv2_1 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv2_1_bn_lwir = nn.BatchNorm2d(128, affine=True)
         self.thermal_conv2_2 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.conv2_2_bn_lwir = nn.BatchNorm2d(128, affine=True)
         self.thermal_pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.thermal_conv3_1 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.conv3_1_bn_lwir = nn.BatchNorm2d(256, affine=True)
         self.thermal_conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv3_2_bn_lwir = nn.BatchNorm2d(256, affine=True)
         self.thermal_conv3_3 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv3_3_bn_lwir = nn.BatchNorm2d(256, affine=True)
         self.thermal_pool3 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode=True)  # ceiling (not floor) here for even dims
 
         self.thermal_conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.conv4_1_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv4_2_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_conv4_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv4_3_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.thermal_conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_1_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_2_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv5_3_bn_lwir = nn.BatchNorm2d(512, affine=True)
         self.thermal_pool5 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)  # retains size because stride is 1 (and padding)
 
         # Replacements for FC6 and FC7 in VGG16
@@ -76,58 +102,57 @@ class VGGBase(nn.Module):
         self.load_pretrained_layers()
 
     def forward(self, rgb, thermal):
-        
         # RGB foward
-        out = F.relu(self.rgb_conv1_1(rgb))  # (N, 64, 300, 300)
-        out = F.relu(self.rgb_conv1_2(out))  # (N, 64, 300, 300)
+        out = F.relu(self.conv1_1_bn_vis(self.rgb_conv1_1(rgb)))  # (N, 64, 300, 300)
+        out = F.relu(self.conv1_2_bn_vis(self.rgb_conv1_2(out)))  # (N, 64, 300, 300)
         out = self.rgb_pool1(out)  # (N, 64, 150, 150)
 
-        out = F.relu(self.rgb_conv2_1(out))  # (N, 128, 150, 150)
-        out = F.relu(self.rgb_conv2_2(out))  # (N, 128, 150, 150)
+        out = F.relu(self.conv2_1_bn_vis(self.rgb_conv2_1(out)))  # (N, 128, 150, 150)
+        out = F.relu(self.conv2_2_bn_vis(self.rgb_conv2_2(out)))  # (N, 128, 150, 150)
         out = self.rgb_pool2(out)  # (N, 128, 75, 75)
 
-        out = F.relu(self.rgb_conv3_1(out))  # (N, 256, 75, 75)
-        out = F.relu(self.rgb_conv3_2(out))  # (N, 256, 75, 75)
-        out = F.relu(self.rgb_conv3_3(out))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_1_bn_vis(self.rgb_conv3_1(out)))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_2_bn_vis(self.rgb_conv3_2(out)))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_3_bn_vis(self.rgb_conv3_3(out)))  # (N, 256, 75, 75)
         out = self.rgb_pool3(out)  # (N, 256, 38, 38), it would have been 37 if not for ceil_mode = True
 
-        out = F.relu(self.rgb_conv4_1(out))  # (N, 512, 38, 38)
-        out = F.relu(self.rgb_conv4_2(out))  # (N, 512, 38, 38)
-        out = F.relu(self.rgb_conv4_3(out))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_1_bn_vis(self.rgb_conv4_1(out)))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_2_bn_vis(self.rgb_conv4_2(out)))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_3_bn_vis(self.rgb_conv4_3(out)))  # (N, 512, 38, 38)
         rgb_conv4_3_feats = out  # (N, 512, 38, 38)
         out = self.rgb_pool4(out)  # (N, 512, 19, 19)
 
-        out = F.relu(self.rgb_conv5_1(out))  # (N, 512, 19, 19)
-        out = F.relu(self.rgb_conv5_2(out))  # (N, 512, 19, 19)
-        out = F.relu(self.rgb_conv5_3(out))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_1_bn_vis(self.rgb_conv5_1(out)))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_2_bn_vis(self.rgb_conv5_2(out)))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_3_bn_vis(self.rgb_conv5_3(out)))  # (N, 512, 19, 19)
         out = self.rgb_pool5(out)  # (N, 512, 19, 19), pool5 does not reduce dimensions
 
         out = F.relu(self.rgb_conv6(out))  # (N, 1024, 19, 19)
         rgb_conv7_feats = F.relu(self.rgb_conv7(out))  # (N, 1024, 19, 19)
 
         # Thermal forward
-        out = F.relu(self.thermal_conv1_1(thermal))  # (N, 64, 300, 300)
-        out = F.relu(self.thermal_conv1_2(out))  # (N, 64, 300, 300)
+        out = F.relu(self.conv1_1_bn_lwir(self.thermal_conv1_1(thermal)))  # (N, 64, 300, 300)
+        out = F.relu(self.conv1_2_bn_lwir(self.thermal_conv1_2(out)))  # (N, 64, 300, 300)
         out = self.thermal_pool1(out)  # (N, 64, 150, 150)
 
-        out = F.relu(self.thermal_conv2_1(out))  # (N, 128, 150, 150)
-        out = F.relu(self.thermal_conv2_2(out))  # (N, 128, 150, 150)
+        out = F.relu(self.conv2_1_bn_lwir(self.thermal_conv2_1(out)))  # (N, 128, 150, 150)
+        out = F.relu(self.conv2_2_bn_lwir(self.thermal_conv2_2(out)))  # (N, 128, 150, 150)
         out = self.thermal_pool2(out)  # (N, 128, 75, 75)
 
-        out = F.relu(self.thermal_conv3_1(out))  # (N, 256, 75, 75)
-        out = F.relu(self.thermal_conv3_2(out))  # (N, 256, 75, 75)
-        out = F.relu(self.thermal_conv3_3(out))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_1_bn_lwir(self.thermal_conv3_1(out)))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_2_bn_lwir(self.thermal_conv3_2(out)))  # (N, 256, 75, 75)
+        out = F.relu(self.conv3_3_bn_lwir(self.thermal_conv3_3(out)))  # (N, 256, 75, 75)
         out = self.thermal_pool3(out)  # (N, 256, 38, 38), it would have been 37 if not for ceil_mode = True
 
-        out = F.relu(self.thermal_conv4_1(out))  # (N, 512, 38, 38)
-        out = F.relu(self.thermal_conv4_2(out))  # (N, 512, 38, 38)
-        out = F.relu(self.thermal_conv4_3(out))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_1_bn_lwir(self.thermal_conv4_1(out)))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_2_bn_lwir(self.thermal_conv4_2(out)))  # (N, 512, 38, 38)
+        out = F.relu(self.conv4_3_bn_lwir(self.thermal_conv4_3(out)))  # (N, 512, 38, 38)
         thermal_conv4_3_feats = out  # (N, 512, 38, 38)
         out = self.thermal_pool4(out)  # (N, 512, 19, 19)
 
-        out = F.relu(self.thermal_conv5_1(out))  # (N, 512, 19, 19)
-        out = F.relu(self.thermal_conv5_2(out))  # (N, 512, 19, 19)
-        out = F.relu(self.thermal_conv5_3(out))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_1_bn_lwir(self.thermal_conv5_1(out)))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_2_bn_lwir(self.thermal_conv5_2(out)))  # (N, 512, 19, 19)
+        out = F.relu(self.conv5_3_bn_lwir(self.thermal_conv5_3(out)))  # (N, 512, 19, 19)
         out = self.thermal_pool5(out)  # (N, 512, 19, 19), pool5 does not reduce dimensions
 
         out = F.relu(self.thermal_conv6(out))  # (N, 1024, 19, 19)
@@ -150,17 +175,16 @@ class VGGBase(nn.Module):
         param_names = list(state_dict.keys())
 
         # Pretrained VGG base
-        pretrained_state_dict = torchvision.models.vgg16(pretrained=True).state_dict()
+        pretrained_state_dict = torchvision.models.vgg16_bn(pretrained=True).state_dict()
         pretrained_param_names = list(pretrained_state_dict.keys())
-
+   
         # Transfer conv. parameters from pretrained model to current model
         # excluding conv6 and conv7 parameters
-
-        for idx in range(26):
+        for idx in range(91):
           state_dict[param_names[idx]] = pretrained_state_dict[pretrained_param_names[idx]]
           if idx == 0:
-            state_dict[param_names[idx+30]] = pretrained_state_dict[pretrained_param_names[idx]][0:,0:1,0:,0:]
-          else : state_dict[param_names[idx+30]] = pretrained_state_dict[pretrained_param_names[idx]]
+            state_dict[param_names[idx+95]] = pretrained_state_dict[pretrained_param_names[idx]][0:,0:1,0:,0:]
+          else : state_dict[param_names[idx+95]] = pretrained_state_dict[pretrained_param_names[idx]]
         # Convert fc6, fc7 to convolutional layers, and subsample (by decimation) to sizes of conv6 and conv7
 
         # fc6
@@ -661,7 +685,7 @@ class MultiBoxLoss(nn.Module):
     (2) a confidence loss for the predicted class scores.
     """
 
-    def __init__(self, priors_cxcy, threshold=0.5, neg_pos_ratio=3, alpha=1.):
+    def __init__(self, priors_cxcy, threshold=0.5, neg_pos_ratio=3, alpha=2.):
         super(MultiBoxLoss, self).__init__()
         self.priors_cxcy = priors_cxcy
         self.priors_xy = cxcy_to_xy(priors_cxcy)
