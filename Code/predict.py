@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model checkpoint
-checkpoint = '/content/drive/MyDrive/KAIST_Double/GFU_v1/93_checkpoint_ssd300.pth.tar'
+checkpoint = '/content/drive/MyDrive/KAIST_Double/GFU_v1/tar/55_checkpoint_ssd300.pth.tar'
 checkpoint = torch.load(checkpoint)
 start_epoch = checkpoint['epoch'] + 1
 print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)

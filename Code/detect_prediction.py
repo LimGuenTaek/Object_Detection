@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model checkpoint
-checkpoint = '/content/drive/MyDrive/KAIST_Double/tar_bn/93_checkpoint_ssd300.pth.tar'
+checkpoint = '/content/drive/MyDrive/KAIST_Double/GFU_v1/tar/55_checkpoint_ssd300.pth.tar'
 checkpoint = torch.load(checkpoint)
 start_epoch = checkpoint['epoch'] + 1
 print('\nLoaded checkpoint from epoch %d.\n' % start_epoch)
@@ -62,20 +62,14 @@ def detect(rgb_image, thermal_image, min_score, max_overlap, top_k, suppress=Non
 
         # Boxes
         box_location = det_boxes[i].tolist()
-        draw.rectangle(xy=box_location, outline=label_color_map[det_labels[i]])
-        draw.rectangle(xy=[l + 1. for l in box_location], outline=label_color_map[
-            det_labels[i]])  # a second rectangle at an offset of 1 pixel to increase line thickness
-        # draw.rectangle(xy=[l + 2. for l in box_location], outline=label_color_map[
-        #     det_labels[i]])  # a third rectangle at an offset of 1 pixel to increase line thickness
-        # draw.rectangle(xy=[l + 3. for l in box_location], outline=label_color_map[
-        #     det_labels[i]])  # a fourth rectangle at an offset of 1 pixel to increase line thickness
-
+        draw.rectangle(xy=box_location, outline=label_color_map["Prediction"])
+        draw.rectangle(xy=[l + 1. for l in box_location], outline=label_color_map["Prediction"]) 
         # Text
         text_size = font.getsize(det_labels[i].upper())
         text_location = [box_location[0] + 2., box_location[1] - text_size[1]]
         textbox_location = [box_location[0], box_location[1] - text_size[1], box_location[0] + text_size[0] + 4.,
                             box_location[1]]
-        draw.rectangle(xy=textbox_location, fill=label_color_map[det_labels[i]])
+        draw.rectangle(xy=textbox_location, fill=label_color_map['Prediction'])
         draw.text(xy=text_location, text=det_labels[i].upper(), fill='white',
                   font=font)
         #draw.score 이런식으로 해주고 좌표값 조절만 잘 해주면 될 듯
@@ -107,4 +101,4 @@ if __name__ == '__main__':
       thermal_image = Image.open(thermal_images[i], mode='r')
       thermal_image = thermal_image.convert('L')
 
-      detect(rgb_image, thermal_image, min_score=0.2, max_overlap=0.5, top_k=200).save("/content/drive/MyDrive/KAIST_Double/Prediction/"+str(i)+".jpg",'JPEG')
+      detect(rgb_image, thermal_image, min_score=0.2, max_overlap=0.5, top_k=200).save("/content/drive/MyDrive/KAIST_Double/GFU_v1/Prediction/"+str(i)+".jpg",'JPEG')

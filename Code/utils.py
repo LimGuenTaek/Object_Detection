@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 import torchvision.transforms.functional as FT
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # Label map
 
 label_map = {'person':1,'background':0}
@@ -19,8 +18,7 @@ distinct_colors = ['#e6194b', '#3cb44b', '#ffe119', '#0082c8', '#f58231', '#911e
                    '#d2f53c', '#fabebe', '#008080', '#000080', '#aa6e28', '#fffac8', '#800000', '#aaffc3', '#808000',
                    '#ffd8b1', '#e6beff', '#808080', '#FFFFFF']
 label_color_map = {k: distinct_colors[i] for i, k in enumerate(label_map.keys())}
-
-
+label_color_map["Prediction"]='#0082c8'
 def parse_annotation(annotation_path):
     tree = ET.parse(annotation_path)
     root = tree.getroot()
@@ -650,7 +648,7 @@ def save_checkpoint(epoch, model, optimizer):
              'model': model,
              'optimizer': optimizer}
     filename = str(epoch)+'_checkpoint_ssd300.pth.tar'
-    torch.save(state,'/content/drive/MyDrive/KAIST_Double/tar_bn/'+filename)
+    torch.save(state,'/content/drive/MyDrive/KAIST_Double/GFU_v1/tar/'+filename)
 
 
 class AverageMeter(object):
