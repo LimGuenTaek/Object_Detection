@@ -99,8 +99,4 @@ class FusionLayer(nn.Module):
 
 ### Prediction
 
-[![Video Label](http://img.youtube.com/vi/jyyKcijT5CA/0.jpg)](https://www.youtube.com/watch?v=jyyKcijT5CAt=0s)
-
-
-
 
