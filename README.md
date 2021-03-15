@@ -98,5 +98,3 @@ class FusionLayer(nn.Module):
 ```
 
 ### Prediction
-
-
