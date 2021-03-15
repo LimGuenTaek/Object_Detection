@@ -27,7 +27,8 @@
 
 ### Code
 
-* Fusion을 담당해주는 class이며 , 그 외 수정 부분은 
+* Fusion을 담당해주는 class이며 , 그 외 Code 수정 부분은 input data를 두장 처리해주는(RGB , Thermal) 과정이 대부분 입니다.
+
 
 ```python
 class FusionLayer(nn.Module):
@@ -99,5 +100,7 @@ class FusionLayer(nn.Module):
 ### Prediction
 
 [![Video Label](http://img.youtube.com/vi/jyyKcijT5CA/0.jpg)](https://www.youtube.com/watch?v=jyyKcijT5CAt=0s)
+
+
 
 
